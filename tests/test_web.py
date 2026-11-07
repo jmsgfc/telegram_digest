@@ -10,8 +10,8 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 import telegram_digest.web as web
-from telegram_digest.cli import DigestRunResult
 from telegram_digest.config import ensure_runtime_files, save_credentials
+from telegram_digest.digest import DigestRunResult
 from telegram_digest.models import ChatInfo
 
 
@@ -239,7 +239,7 @@ class WebJobTests(unittest.IsolatedAsyncioTestCase):
         }
         paths = [Path("messages-a.jsonl"), Path("messages-b.jsonl")]
         result = DigestRunResult(paths=paths)
-        with patch.object(web, "command_digest", return_value=result):
+        with patch.object(web, "export_selected_messages", return_value=result):
             await web._run_digest_job(job_id)
         self.assertEqual(web.jobs[job_id]["status"], "succeeded")
         self.assertEqual(web.jobs[job_id]["results"], ["messages-a.jsonl", "messages-b.jsonl"])
@@ -256,7 +256,7 @@ class WebJobTests(unittest.IsolatedAsyncioTestCase):
             "created_at": 0,
         }
         result = DigestRunResult(paths=[Path("messages-a.jsonl")], warnings=["第二个会话读取失败"])
-        with patch.object(web, "command_digest", return_value=result):
+        with patch.object(web, "export_selected_messages", return_value=result):
             await web._run_digest_job(job_id)
         self.assertEqual(web.jobs[job_id]["status"], "partial")
         self.assertEqual(web.jobs[job_id]["results"], ["messages-a.jsonl"])

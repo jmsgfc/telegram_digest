@@ -20,7 +20,7 @@ from telegram_digest.models import DigestMessage
 from telegram_digest.state_store import StateStore
 from telegram_digest.telegram_client import collect_messages
 import telegram_digest.telegram_client as telegram_client_module
-import telegram_digest.cli as cli_module
+import telegram_digest.digest as digest_module
 from telegram_digest.phone import normalize_phone
 from telegram_digest.paths import runtime_dir
 
@@ -82,13 +82,6 @@ class CoreTests(unittest.TestCase):
             normalize_phone("+86", "")
         with self.assertRaises(ValueError):
             normalize_phone("+86", "138abc")
-
-    def test_frozen_runtime_uses_executable_directory(self) -> None:
-        fake_executable = str(Path("C:/Portable/TelegramDigest/TelegramDigest.exe"))
-        with patch("telegram_digest.paths.sys.frozen", True, create=True), patch(
-            "telegram_digest.paths.sys.executable", fake_executable
-        ):
-            self.assertEqual(runtime_dir(), Path(fake_executable).resolve().parent)
 
     def test_runtime_directory_can_be_overridden_for_docker(self) -> None:
         with tempfile.TemporaryDirectory() as directory, patch.dict(
@@ -205,13 +198,7 @@ class _DigestClient:
         return True
 
 
-class DigestCommandTests(unittest.IsolatedAsyncioTestCase):
-    async def test_cli_dispatch_fails_when_no_chat_was_completed(self) -> None:
-        failed = cli_module.DigestRunResult(warnings=["会话读取失败"])
-        with patch.object(cli_module, "command_digest", return_value=failed):
-            with self.assertRaisesRegex(RuntimeError, "会话读取失败"):
-                await cli_module.dispatch("digest")
-
+class DigestExportTests(unittest.IsolatedAsyncioTestCase):
     async def test_each_chat_generates_an_independent_file(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -226,12 +213,14 @@ class DigestCommandTests(unittest.IsolatedAsyncioTestCase):
             )
             first = [DigestMessage(11, datetime(2026, 1, 1, tzinfo=timezone.utc), "甲", "课程作业")]
             second = [DigestMessage(22, datetime(2026, 1, 1, tzinfo=timezone.utc), "乙", "考试通知")]
-            with patch.object(cli_module, "PROJECT_DIR", root), patch.object(
-                cli_module, "create_client", return_value=_DigestClient()
+            with patch.object(
+                digest_module, "create_client", return_value=_DigestClient()
             ), patch.object(
-                cli_module, "collect_messages", side_effect=[first, second]
+                digest_module, "collect_messages", side_effect=[first, second]
             ):
-                result = await cli_module.command_digest(reporter=lambda _message: None)
+                result = await digest_module.export_selected_messages(
+                    root, reporter=lambda _message: None
+                )
 
             self.assertEqual(len(result.paths), 2)
             self.assertEqual(result.warnings, [])
@@ -253,12 +242,14 @@ class DigestCommandTests(unittest.IsolatedAsyncioTestCase):
                 {"peer_id": -1002, "title": "失败群", "kind": "群组"},
             ])
             first = [DigestMessage(11, datetime(2026, 1, 1, tzinfo=timezone.utc), "甲", "已保存消息")]
-            with patch.object(cli_module, "PROJECT_DIR", root), patch.object(
-                cli_module, "create_client", return_value=_DigestClient()
+            with patch.object(
+                digest_module, "create_client", return_value=_DigestClient()
             ), patch.object(
-                cli_module, "collect_messages", side_effect=[first, OSError("网络中断")]
+                digest_module, "collect_messages", side_effect=[first, OSError("网络中断")]
             ):
-                result = await cli_module.command_digest(reporter=lambda _message: None)
+                result = await digest_module.export_selected_messages(
+                    root, reporter=lambda _message: None
+                )
 
             self.assertEqual(len(result.paths), 1)
             self.assertEqual(len(result.warnings), 1)

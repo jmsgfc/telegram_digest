@@ -14,8 +14,6 @@ dependencies = [
 ]
 
 [project.scripts]
-telegram-digest = "telegram_digest.cli:main"
-telegram-digest-gui = "telegram_digest.gui:main"
 telegram-digest-web = "telegram_digest.web:run"
 
 [tool.setuptools]

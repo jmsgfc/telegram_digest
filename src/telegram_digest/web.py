@@ -25,7 +25,6 @@ from telethon.errors import (
     SessionPasswordNeededError,
 )
 
-from .cli import command_digest
 from .config import (
     ensure_runtime_files,
     load_settings,
@@ -35,6 +34,7 @@ from .config import (
     save_selected_chats,
     update_runtime_config,
 )
+from .digest import export_selected_messages
 from .models import ChatInfo
 from .paths import runtime_dir
 from .phone import normalize_phone
@@ -428,7 +428,7 @@ async def _run_digest_job(job_id: str) -> None:
 
     try:
         async with telegram_lock:
-            result = await command_digest(reporter=report)
+            result = await export_selected_messages(RUNTIME_DIR, reporter=report)
         job["results"] = [path.name for path in result.paths]
         job["warnings"] = result.warnings
         if result.warnings:

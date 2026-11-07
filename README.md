@@ -4,11 +4,6 @@
 
 > [!IMPORTANT]
 > 本项目使用 Telegram 用户 API，需要用户自行申请 `api_id` 和 `api_hash`，并使用自己的手机号登录。
->
-> - `.env`、Telegram 会话文件、运行状态和聊天导出均已排除在 Git 提交之外。
-> - 登录会话文件等同于账号凭据，请勿分享、上传或放入公共网盘。
-> - 程序不会调用主动确认已读的接口，也不会把聊天内容自动发送给任何 AI 服务。
-> - 请仅处理本人有权访问的数据，并遵守 Telegram 服务条款及所在地区的法律法规。
 
 ![Telegram Digest 网页界面](./docs/project/web-preview.png)
 
@@ -23,14 +18,13 @@
 | 独立 JSONL | 每个群聊或频道单独生成文件，避免不同会话内容混在一起 |
 | 批量下载 | 支持单个下载和批量下载导出的 JSONL 文件 |
 | AI 总结提示词 | 内置可复制的中文提示词，用于生成详细总结与总结图片 |
-| 多种入口 | 提供 Docker 网页版、Windows 图形界面和命令行工具 |
+| 两种启动方式 | 支持 Docker 部署，也可在 Windows 中双击脚本直接启动网页版 |
 
 ## 技术栈
 
 - Telegram：Telethon
 - Web API：FastAPI、Uvicorn
 - 网页界面：HTML、CSS、JavaScript
-- 桌面界面：Python Tkinter
 - 数据格式：JSON、JSONL
 - 部署：Docker、Docker Compose
 - 测试：Python `unittest`
@@ -63,15 +57,6 @@ Telegram 用户 API
 
 本地版本将配置、登录会话、增量状态和导出文件保存在运行目录；Docker 版本保存在 `telegram-digest-data` 本地数据卷。源码仓库只包含配置示例，不包含真实账号或聊天内容。
 
-## 环境要求
-
-| 使用方式 | 要求 |
-| --- | --- |
-| Docker 网页版 | Docker Desktop、Docker Compose |
-| Python 网页版 | Python 3.10 或更高版本 |
-| Windows 图形界面 | Windows 10 / 11、Python 3.10+ |
-| Telegram 连接 | 可用的 Telegram 个人账号、`api_id` 和 `api_hash` |
-
 ## Docker 部署
 
 克隆项目并启动：
@@ -96,26 +81,13 @@ docker compose down
 
 `docker compose down` 不会删除登录信息和导出数据。若需要彻底清理，应在确认不再需要数据后手动删除 `telegram-digest-data` 数据卷。
 
-## Python 运行
+## Windows 直接启动
 
-创建虚拟环境并安装：
+电脑安装 Python 3.10 或更高版本后，克隆或下载项目，双击 `启动网页版.cmd`。
 
-```powershell
-py -3.10 -m venv .venv
-& ".\.venv\Scripts\python.exe" -m pip install -e .
-```
+脚本首次运行会自动创建 `.venv` 并安装依赖，随后启动本地服务并打开 `http://127.0.0.1:8765`。以后直接双击同一脚本即可；关闭名为 `Telegram Digest` 的命令行窗口即可停止服务。
 
-启动网页版：
-
-```powershell
-& ".\.venv\Scripts\telegram-digest-web.exe"
-```
-
-Windows 用户也可以双击 `启动图形界面.cmd`，或打开文字菜单：
-
-```powershell
-& ".\.venv\Scripts\telegram-digest.exe" menu
-```
+Docker 与 Windows 直接启动都使用本机 `8765` 端口，请勿同时运行；切换前先停止正在使用的方式。
 
 ## 使用
 
@@ -130,7 +102,7 @@ Windows 用户也可以双击 `启动图形界面.cmd`，或打开文字菜单�
 ## 项目结构
 
 ```text
-src/telegram_digest/              Python 主程序
+src/telegram_digest/              网页后端与消息导出逻辑
 src/telegram_digest/web_static/   网页界面资源
 tests/                            单元测试与接口测试
 data/                             本机配置、登录会话和增量状态（不提交）
@@ -138,7 +110,7 @@ output/                           JSONL 消息导出（不提交）
 docs/project/                     项目图片与补充说明
 Dockerfile                        Docker 镜像配置
 docker-compose.yml                本地容器部署配置
-build_portable.ps1                Windows 便携版构建脚本
+启动网页版.cmd                    Windows 一键启动脚本
 ```
 
 ## 隐私与限制
