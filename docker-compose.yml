@@ -1,0 +1,23 @@
+services:
+  telegram-digest:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: telegram-digest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8765:8765"
+    environment:
+      TZ: Asia/Shanghai
+      TELEGRAM_DIGEST_RUNTIME_DIR: /app/runtime
+    volumes:
+      - telegram-digest-data:/app/runtime
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8765/api/health', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+volumes:
+  telegram-digest-data:
